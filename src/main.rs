@@ -732,14 +732,11 @@ fn main() {
     // the main loop.
     let (work_tx, work_rx) = mpsc::channel::<Value>();
     let reader_pending = pending.clone();
-    let reader = std::thread::spawn(move || {
+    let _reader = std::thread::spawn(move || {
         let stdin = std::io::stdin();
         for line in stdin.lock().lines() {
             let Ok(line) = line else { break };
             let Ok(v) = serde_json::from_str::<Value>(&line) else { continue };
-            if v.get("method").and_then(|m| m.as_str()) == Some("plugin/shutdown") {
-                break;
-            }
             if let Some(id) = v.get("id").and_then(|i| i.as_str())
                 && v.get("method").is_none()
                 && let Some(tx) = reader_pending.lock().expect("pending").remove(id)
@@ -768,7 +765,8 @@ fn main() {
         }
         let _ = method;
     }
-    let _ = reader.join();
+    // The reader thread is a detached stdin pump; returning from main
+    // ends the process with it, so there is nothing to join.
 }
 
 #[cfg(test)]
