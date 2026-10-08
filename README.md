@@ -1,8 +1,16 @@
-# gray-spotify
+<p align="center">
+  <img src="assets/gray-logo.svg" alt="gray" width="96">
+  <img src="assets/spotify.svg" alt="spotify" width="96">
+</p>
+<h1 align="center">gray-spotify</h1>
+<p align="center">Spotify playback, queue, and search via the Web API + PKCE OAuth.</p>
+<p align="center">
+  <a href="https://github.com/vstaln/gray-spotify/blob/main/LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-blue.svg"></a>
+  <img alt="gray plugin" src="https://img.shields.io/badge/gray-plugin-7aa2f7.svg">
+  <img alt="rust" src="https://img.shields.io/badge/built%20with-rust-orange.svg">
+</p>
 
-Spotify playback control via the Web API + PKCE OAuth. Port of hermes' spotify plugin.
-
-A sidecar plugin for [gray](https://github.com/vstaln/gray).
+Control Spotify from the agent: play, pause, next/prev, queue, search, what's-playing, and volume — through the Web API with PKCE OAuth.
 
 ## What it does
 
@@ -49,3 +57,7 @@ cargo test
 gray account check      # entry point + manifest handshake
 gray account publish    # check → build → release → publish to the gray registry
 ```
+
+---
+Part of the [gray](https://github.com/vstaln/gray) plugin ecosystem —
+the open-source AI agent harness. <https://gray.alignment.id>
