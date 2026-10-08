@@ -1,0 +1,17 @@
+[package]
+name = "gray-spotify"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.91"
+license = "MIT"
+description = "Spotify playback control via Web API + PKCE OAuth. Port of hermes' spotify plugin."
+
+[[bin]]
+name = "gray-spotify"
+path = "src/main.rs"
+
+[dependencies]
+serde_json = "1"
+
+[profile.release]
+strip = true
