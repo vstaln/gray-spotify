@@ -129,7 +129,7 @@ fn b64_encode(bytes: &[u8], url_safe: bool) -> String {
                 idx[i] = 64; // padding marker
             }
         }
-        for (i, &ix) in idx.iter().enumerate() {
+        for &ix in idx.iter() {
             if ix == 64 {
                 out.push('=');
             } else {
