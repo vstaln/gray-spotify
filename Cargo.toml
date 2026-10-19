@@ -11,6 +11,7 @@ name = "gray-spotify"
 path = "src/main.rs"
 
 [dependencies]
+getrandom = "0.3"
 serde_json = "1"
 
 [profile.release]

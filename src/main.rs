@@ -154,14 +154,17 @@ fn urlencode(s: &str) -> String {
 }
 
 fn rand_bytes(n: usize) -> Vec<u8> {
-    std::fs::read("/dev/urandom")
-        .map(|b| b.into_iter().take(n).collect())
-        .unwrap_or_else(|_| {
-            let t = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default();
-            (0..n).map(|i| ((t.subsec_nanos() >> (i % 24)) as u8) ^ (i as u8)).collect()
-        })
+    let mut v = vec![0u8; n];
+    if getrandom::fill(&mut v).is_err() {
+        // OS RNG unavailable — weak time mixing beats returning zeros.
+        let t = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default();
+        for (i, b) in v.iter_mut().enumerate() {
+            *b = ((t.subsec_nanos() >> (i % 24)) as u8) ^ (i as u8);
+        }
+    }
+    v
 }
 
 // ---------- state -----------------------------------------------------------
@@ -169,7 +172,7 @@ fn rand_bytes(n: usize) -> Vec<u8> {
 fn state_dir() -> PathBuf {
     let home = std::env::var_os("GRAY_HOME")
         .map(PathBuf::from)
-        .or_else(|| std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".gray")))
+        .or_else(|| std::env::home_dir().map(|h| h.join(".gray")))
         .unwrap_or_else(|| PathBuf::from("."));
     home.join("spotify")
 }
