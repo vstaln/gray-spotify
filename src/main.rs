@@ -194,8 +194,15 @@ fn load_token() -> Result<Value, String> {
 fn save_token(t: &Value) -> Result<(), String> {
     let dir = state_dir();
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    std::fs::write(token_path(), serde_json::to_string_pretty(t).unwrap())
-        .map_err(|e| format!("couldn't save token: {e}"))
+    let path = token_path();
+    std::fs::write(&path, serde_json::to_string_pretty(t).unwrap())
+        .map_err(|e| format!("couldn't save token: {e}"))?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600));
+    }
+    Ok(())
 }
 
 // ---------- curl ------------------------------------------------------------
@@ -627,8 +634,14 @@ fn run_command(
             });
             let dir = state_dir();
             let _ = std::fs::create_dir_all(&dir);
-            if std::fs::write(pkce_path(), pkce.to_string()).is_err() {
+            let pkce_path = pkce_path();
+            if std::fs::write(&pkce_path, pkce.to_string()).is_err() {
                 return "couldn't save pkce state under ~/.gray/spotify/".into();
+            }
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let _ = std::fs::set_permissions(&pkce_path, std::fs::Permissions::from_mode(0o600));
             }
             // Best-effort: surface the URL in chat too when host.say is granted.
             host_send(out, "host/say", json!({"text": format!("Spotify auth — open:\n{url}")}), Some(&next_id(counter)));
