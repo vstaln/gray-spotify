@@ -45,6 +45,7 @@ fn manifest() -> Value {
             }
         }],
         "commands": ["/spotify"],
+        "command_descriptions": {"/spotify": "control Spotify playback and sign in"},
     })
 }
 
