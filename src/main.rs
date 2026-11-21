@@ -53,17 +53,20 @@ fn manifest() -> Value {
 
 fn sha256(data: &[u8]) -> [u8; 32] {
     const K: [u32; 64] = [
-        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2,
+        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
+        0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe,
+        0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f,
+        0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+        0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc,
+        0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b,
+        0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116,
+        0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7,
+        0xc67178f2,
     ];
     let mut h: [u32; 8] = [
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab,
+        0x5be0cd19,
     ];
     let mut msg = data.to_vec();
     let bitlen = (data.len() as u64) * 8;
@@ -72,10 +75,15 @@ fn sha256(data: &[u8]) -> [u8; 32] {
         msg.push(0);
     }
     msg.extend_from_slice(&bitlen.to_be_bytes());
-    for chunk in msg.chunks_exact(64) {
+    for chunk in msg.as_chunks::<64>().0 {
         let mut w = [0u32; 64];
         for i in 0..16 {
-            w[i] = u32::from_be_bytes([chunk[4 * i], chunk[4 * i + 1], chunk[4 * i + 2], chunk[4 * i + 3]]);
+            w[i] = u32::from_be_bytes([
+                chunk[4 * i],
+                chunk[4 * i + 1],
+                chunk[4 * i + 2],
+                chunk[4 * i + 3],
+            ]);
         }
         for i in 16..64 {
             let s0 = w[i - 15].rotate_right(7) ^ w[i - 15].rotate_right(18) ^ (w[i - 15] >> 3);
@@ -98,13 +106,23 @@ fn sha256(data: &[u8]) -> [u8; 32] {
             let s0 = a.rotate_right(2) ^ a.rotate_right(13) ^ a.rotate_right(22);
             let maj = (a & b) ^ (a & c) ^ (b & c);
             let t2 = s0.wrapping_add(maj);
-            hh = g; g = f; f = e; e = d.wrapping_add(t1);
-            d = c; c = b; b = a; a = t1.wrapping_add(t2);
+            hh = g;
+            g = f;
+            f = e;
+            e = d.wrapping_add(t1);
+            d = c;
+            c = b;
+            b = a;
+            a = t1.wrapping_add(t2);
         }
-        h[0] = h[0].wrapping_add(a); h[1] = h[1].wrapping_add(b);
-        h[2] = h[2].wrapping_add(c); h[3] = h[3].wrapping_add(d);
-        h[4] = h[4].wrapping_add(e); h[5] = h[5].wrapping_add(f);
-        h[6] = h[6].wrapping_add(g); h[7] = h[7].wrapping_add(hh);
+        h[0] = h[0].wrapping_add(a);
+        h[1] = h[1].wrapping_add(b);
+        h[2] = h[2].wrapping_add(c);
+        h[3] = h[3].wrapping_add(d);
+        h[4] = h[4].wrapping_add(e);
+        h[5] = h[5].wrapping_add(f);
+        h[6] = h[6].wrapping_add(g);
+        h[7] = h[7].wrapping_add(hh);
     }
     let mut out = [0u8; 32];
     for i in 0..8 {
@@ -119,15 +137,10 @@ fn b64_encode(bytes: &[u8], url_safe: bool) -> String {
     let mut out = String::with_capacity(bytes.len() * 4 / 3 + 4);
     for chunk in bytes.chunks(3) {
         let n = chunk.iter().fold(0u32, |acc, &b| (acc << 8) | b as u32) << (8 * (3 - chunk.len()));
-        let mut idx = [
-            (n >> 18) & 63,
-            (n >> 12) & 63,
-            (n >> 6) & 63,
-            n & 63,
-        ];
-        for i in 1..4 {
+        let mut idx = [(n >> 18) & 63, (n >> 12) & 63, (n >> 6) & 63, n & 63];
+        for (i, slot) in idx.iter_mut().enumerate().take(4).skip(1) {
             if i > chunk.len() {
-                idx[i] = 64; // padding marker
+                *slot = 64; // padding marker
             }
         }
         for &ix in idx.iter() {
@@ -135,7 +148,15 @@ fn b64_encode(bytes: &[u8], url_safe: bool) -> String {
                 out.push('=');
             } else {
                 let c = B64[ix as usize] as char;
-                let c = if url_safe { match c { '+' => '-', '/' => '_', c => c } } else { c };
+                let c = if url_safe {
+                    match c {
+                        '+' => '-',
+                        '/' => '_',
+                        c => c,
+                    }
+                } else {
+                    c
+                };
                 out.push(c);
             }
         }
@@ -187,8 +208,9 @@ fn pkce_path() -> PathBuf {
 }
 
 fn load_token() -> Result<Value, String> {
-    let text = std::fs::read_to_string(token_path())
-        .map_err(|_| "not authorized with Spotify — run /spotify auth (needs SPOTIFY_CLIENT_ID)".to_string())?;
+    let text = std::fs::read_to_string(token_path()).map_err(|_| {
+        "not authorized with Spotify — run /spotify auth (needs SPOTIFY_CLIENT_ID)".to_string()
+    })?;
     serde_json::from_str(&text).map_err(|e| format!("corrupt token file: {e}"))
 }
 
@@ -219,12 +241,20 @@ fn curl(args: &[String]) -> Result<(u16, String), String> {
     let (body, status) = text.rsplit_once('\n').unwrap_or((&text, "0"));
     let status: u16 = status.trim().parse().unwrap_or(0);
     if status == 0 && !out.status.success() {
-        return Err(format!("curl failed: {}", String::from_utf8_lossy(&out.stderr).trim()));
+        return Err(format!(
+            "curl failed: {}",
+            String::from_utf8_lossy(&out.stderr).trim()
+        ));
     }
     Ok((status, body.to_string()))
 }
 
-fn api(method: &str, path: &str, query: &[(&str, String)], body: Option<Value>) -> Result<(u16, Value), String> {
+fn api(
+    method: &str,
+    path: &str,
+    query: &[(&str, String)],
+    body: Option<Value>,
+) -> Result<(u16, Value), String> {
     api_inner(method, path, query, body, true)
 }
 
@@ -236,7 +266,10 @@ fn api_inner(
     retry: bool,
 ) -> Result<(u16, Value), String> {
     let token = load_token()?;
-    let access = token.get("access_token").and_then(Value::as_str).unwrap_or("");
+    let access = token
+        .get("access_token")
+        .and_then(Value::as_str)
+        .unwrap_or("");
     let mut url = format!("{API_BASE}{path}");
     if !query.is_empty() {
         let qs: Vec<String> = query.iter().map(|(k, v)| format!("{k}={v}")).collect();
@@ -244,9 +277,12 @@ fn api_inner(
         url.push_str(&qs.join("&"));
     }
     let mut args = vec![
-        "-X".into(), method.into(),
-        "-H".into(), format!("Authorization: Bearer {access}"),
-        "-H".into(), "Content-Type: application/json".into(),
+        "-X".into(),
+        method.into(),
+        "-H".into(),
+        format!("Authorization: Bearer {access}"),
+        "-H".into(),
+        "Content-Type: application/json".into(),
         url,
     ];
     if let Some(b) = &body {
@@ -265,7 +301,12 @@ fn api_inner(
     Ok((status, v))
 }
 
-fn api_ok(method: &str, path: &str, query: &[(&str, String)], body: Option<Value>) -> Result<Value, String> {
+fn api_ok(
+    method: &str,
+    path: &str,
+    query: &[(&str, String)],
+    body: Option<Value>,
+) -> Result<Value, String> {
     let (status, v) = api(method, path, query, body)?;
     if (200..300).contains(&status) {
         return Ok(v);
@@ -276,14 +317,20 @@ fn api_ok(method: &str, path: &str, query: &[(&str, String)], body: Option<Value
         .map(str::to_string)
         .unwrap_or_else(|| {
             let t = v.to_string();
-            if t == "{}" { String::new() } else { t.chars().take(200).collect() }
+            if t == "{}" {
+                String::new()
+            } else {
+                t.chars().take(200).collect()
+            }
         });
     let hint = match status {
         404 => " (no active device? open Spotify on a device first)",
         403 => " (needs Premium / an active device)",
         _ => "",
     };
-    Err(format!("spotify {method} {path} → {status}{hint}: {detail}"))
+    Err(format!(
+        "spotify {method} {path} → {status}{hint}: {detail}"
+    ))
 }
 
 fn refresh_token(token: &Value) -> Result<(), String> {
@@ -291,21 +338,30 @@ fn refresh_token(token: &Value) -> Result<(), String> {
         .get("refresh_token")
         .and_then(Value::as_str)
         .ok_or("token expired and no refresh_token stored — run /spotify auth again")?;
-    let client_id = token.get("client_id").and_then(Value::as_str).unwrap_or("").to_string();
+    let client_id = token
+        .get("client_id")
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_string();
     let form = format!(
         "grant_type=refresh_token&refresh_token={}&client_id={}",
         urlencode(refresh),
         urlencode(&client_id)
     );
     let (status, text) = curl(&[
-        "-X".into(), "POST".into(),
-        "-H".into(), "Content-Type: application/x-www-form-urlencoded".into(),
-        "-d".into(), form,
+        "-X".into(),
+        "POST".into(),
+        "-H".into(),
+        "Content-Type: application/x-www-form-urlencoded".into(),
+        "-d".into(),
+        form,
         format!("{ACCOUNTS_BASE}/api/token"),
     ])?;
     let v: Value = serde_json::from_str(&text).unwrap_or(json!({}));
     if status != 200 || v.get("access_token").is_none() {
-        return Err(format!("token refresh failed ({status}) — run /spotify auth again"));
+        return Err(format!(
+            "token refresh failed ({status}) — run /spotify auth again"
+        ));
     }
     let mut t = token.clone();
     t["access_token"] = v["access_token"].clone();
@@ -335,13 +391,25 @@ fn fmt_track(t: &Value) -> String {
                 .join(", ")
         })
         .unwrap_or_default();
-    let album = t.pointer("/album/name").and_then(Value::as_str).unwrap_or("");
+    let album = t
+        .pointer("/album/name")
+        .and_then(Value::as_str)
+        .unwrap_or("");
     let uri = t.get("uri").and_then(Value::as_str).unwrap_or("");
     format!("{name} — {artists} [{album}] ({uri})")
 }
 
 fn search_track(query: &str) -> Result<Value, String> {
-    let v = api_ok("GET", "/search", &[("q", urlencode(query)), ("type", "track".into()), ("limit", "5".into())], None)?;
+    let v = api_ok(
+        "GET",
+        "/search",
+        &[
+            ("q", urlencode(query)),
+            ("type", "track".into()),
+            ("limit", "5".into()),
+        ],
+        None,
+    )?;
     Ok(v)
 }
 
@@ -361,13 +429,21 @@ fn call_tool(name: &str, args: &Value) -> Result<String, String> {
     match action {
         "play" => {
             let mut body = json!({});
-            if let Some(uri) = args.get("uri").and_then(Value::as_str).filter(|s| !s.is_empty()) {
+            if let Some(uri) = args
+                .get("uri")
+                .and_then(Value::as_str)
+                .filter(|s| !s.is_empty())
+            {
                 if uri.contains(":track:") {
                     body = json!({"uris": [uri]});
                 } else {
                     body = json!({"context_uri": uri});
                 }
-            } else if let Some(q) = args.get("query").and_then(Value::as_str).filter(|s| !s.is_empty()) {
+            } else if let Some(q) = args
+                .get("query")
+                .and_then(Value::as_str)
+                .filter(|s| !s.is_empty())
+            {
                 let uri = top_track_uri(q)?;
                 body = json!({"uris": [uri]});
             }
@@ -387,7 +463,11 @@ fn call_tool(name: &str, args: &Value) -> Result<String, String> {
             Ok("back to previous track".into())
         }
         "queue" => {
-            let uri = match args.get("uri").and_then(Value::as_str).filter(|s| !s.is_empty()) {
+            let uri = match args
+                .get("uri")
+                .and_then(Value::as_str)
+                .filter(|s| !s.is_empty())
+            {
                 Some(u) => u.to_string(),
                 None => {
                     let q = args.get("query").and_then(Value::as_str).unwrap_or("");
@@ -397,16 +477,29 @@ fn call_tool(name: &str, args: &Value) -> Result<String, String> {
                     top_track_uri(q)?
                 }
             };
-            api_ok("POST", "/me/player/queue", &[("uri", urlencode(&uri))], None)?;
+            api_ok(
+                "POST",
+                "/me/player/queue",
+                &[("uri", urlencode(&uri))],
+                None,
+            )?;
             Ok(format!("queued {uri}"))
         }
         "search" => {
-            let q = args.get("query").and_then(Value::as_str).unwrap_or("").trim();
+            let q = args
+                .get("query")
+                .and_then(Value::as_str)
+                .unwrap_or("")
+                .trim();
             if q.is_empty() {
                 return Err("search needs a query".into());
             }
             let v = search_track(q)?;
-            let items = v.pointer("/tracks/items").and_then(Value::as_array).cloned().unwrap_or_default();
+            let items = v
+                .pointer("/tracks/items")
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default();
             if items.is_empty() {
                 return Ok(format!("no tracks found for {q:?}"));
             }
@@ -419,15 +512,25 @@ fn call_tool(name: &str, args: &Value) -> Result<String, String> {
                 return Ok("nothing playing — start playback in Spotify first".into());
             }
             if !(200..300).contains(&status) {
-                let detail = v.pointer("/error/message").and_then(Value::as_str).unwrap_or("");
+                let detail = v
+                    .pointer("/error/message")
+                    .and_then(Value::as_str)
+                    .unwrap_or("");
                 return Err(format!("spotify now → {status}: {detail}"));
             }
             let item = v.get("item").cloned().unwrap_or(json!({}));
             if item.is_null() || item.get("name").is_none() {
                 return Ok("nothing playing".into());
             }
-            let playing = v.get("is_playing").and_then(Value::as_bool).unwrap_or(false);
-            Ok(format!("{} {}", if playing { "▶" } else { "⏸" }, fmt_track(&item)))
+            let playing = v
+                .get("is_playing")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
+            Ok(format!(
+                "{} {}",
+                if playing { "▶" } else { "⏸" },
+                fmt_track(&item)
+            ))
         }
         "volume" => {
             let pct = args
@@ -435,7 +538,12 @@ fn call_tool(name: &str, args: &Value) -> Result<String, String> {
                 .and_then(Value::as_i64)
                 .ok_or("volume needs percent (0-100)")?
                 .clamp(0, 100);
-            api_ok("PUT", "/me/player/volume", &[("volume_percent", pct.to_string())], None)?;
+            api_ok(
+                "PUT",
+                "/me/player/volume",
+                &[("volume_percent", pct.to_string())],
+                None,
+            )?;
             Ok(format!("volume {pct}%"))
         }
         other => Err(format!(
@@ -488,10 +596,17 @@ fn extract_code(text: &str) -> Option<String> {
 fn exchange_code(code: &str) -> Result<String, String> {
     let pkce_text = std::fs::read_to_string(pkce_path())
         .map_err(|_| "no pending auth flow — run /spotify auth first".to_string())?;
-    let pkce: Value = serde_json::from_str(&pkce_text).map_err(|e| format!("corrupt pkce state: {e}"))?;
+    let pkce: Value =
+        serde_json::from_str(&pkce_text).map_err(|e| format!("corrupt pkce state: {e}"))?;
     let client_id = pkce.get("client_id").and_then(Value::as_str).unwrap_or("");
-    let verifier = pkce.get("code_verifier").and_then(Value::as_str).unwrap_or("");
-    let redirect = pkce.get("redirect_uri").and_then(Value::as_str).unwrap_or("");
+    let verifier = pkce
+        .get("code_verifier")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    let redirect = pkce
+        .get("redirect_uri")
+        .and_then(Value::as_str)
+        .unwrap_or("");
     let form = format!(
         "client_id={}&grant_type=authorization_code&code={}&redirect_uri={}&code_verifier={}",
         urlencode(client_id),
@@ -500,15 +615,19 @@ fn exchange_code(code: &str) -> Result<String, String> {
         urlencode(verifier),
     );
     let (status, text) = curl(&[
-        "-X".into(), "POST".into(),
-        "-H".into(), "Content-Type: application/x-www-form-urlencoded".into(),
-        "-d".into(), form,
+        "-X".into(),
+        "POST".into(),
+        "-H".into(),
+        "Content-Type: application/x-www-form-urlencoded".into(),
+        "-d".into(),
+        form,
         format!("{ACCOUNTS_BASE}/api/token"),
     ])?;
     let v: Value = serde_json::from_str(&text).unwrap_or(json!({}));
     let access = v.get("access_token").and_then(Value::as_str).unwrap_or("");
     if status != 200 || access.is_empty() {
-        let detail = v.pointer("/error_description")
+        let detail = v
+            .pointer("/error_description")
             .or_else(|| v.pointer("/error/message"))
             .and_then(Value::as_str)
             .unwrap_or(&text);
@@ -577,17 +696,28 @@ fn host_ask(
     let res = rx.recv_timeout(ASK_TTL);
     pending.lock().expect("pending").remove(&id);
     match res {
-        Err(_) => Err("no answer — paste the code with /spotify code <code-or-redirect-url> instead".into()),
+        Err(_) => Err(
+            "no answer — paste the code with /spotify code <code-or-redirect-url> instead".into(),
+        ),
         Ok(result) => {
-            if let Some(err) = result.pointer("/error/message").and_then(Value::as_str)
+            if let Some(err) = result
+                .pointer("/error/message")
+                .and_then(Value::as_str)
                 .or_else(|| result.get("error").and_then(|e| e.as_str()))
             {
-                return Err(format!("host/ask failed: {err} — finish with /spotify code <code>"));
+                return Err(format!(
+                    "host/ask failed: {err} — finish with /spotify code <code>"
+                ));
             }
             let entry = &result["answers"]["code"]["answers"];
             let answers: Vec<String> = entry
                 .as_array()
-                .map(|a| a.iter().filter_map(Value::as_str).map(str::to_string).collect())
+                .map(|a| {
+                    a.iter()
+                        .filter_map(Value::as_str)
+                        .map(str::to_string)
+                        .collect()
+                })
                 .unwrap_or_default();
             for a in &answers {
                 let a = a.strip_prefix("user_note: ").unwrap_or(a);
@@ -616,9 +746,18 @@ fn run_command(
                 Err(e) => return e,
             };
             let redirect = redirect_uri();
-            let verifier = b64_encode(&rand_bytes(64), true).trim_end_matches('=').chars().take(96).collect::<String>();
-            let challenge = b64_encode(&sha256(verifier.as_bytes()), true).trim_end_matches('=').to_string();
-            let state = rand_bytes(12).iter().map(|b| format!("{b:02x}")).collect::<String>();
+            let verifier = b64_encode(&rand_bytes(64), true)
+                .trim_end_matches('=')
+                .chars()
+                .take(96)
+                .collect::<String>();
+            let challenge = b64_encode(&sha256(verifier.as_bytes()), true)
+                .trim_end_matches('=')
+                .to_string();
+            let state = rand_bytes(12)
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>();
             let url = format!(
                 "{ACCOUNTS_BASE}/authorize?client_id={}&response_type=code&redirect_uri={}&scope={}&state={}&code_challenge_method=S256&code_challenge={}",
                 urlencode(&client_id),
@@ -642,19 +781,23 @@ fn run_command(
             #[cfg(unix)]
             {
                 use std::os::unix::fs::PermissionsExt;
-                let _ = std::fs::set_permissions(&pkce_path, std::fs::Permissions::from_mode(0o600));
+                let _ =
+                    std::fs::set_permissions(&pkce_path, std::fs::Permissions::from_mode(0o600));
             }
             // Best-effort: surface the URL in chat too when host.say is granted.
-            host_send(out, "host/say", json!({"text": format!("Spotify auth — open:\n{url}")}), Some(&next_id(counter)));
+            host_send(
+                out,
+                "host/say",
+                json!({"text": format!("Spotify auth — open:\n{url}")}),
+                Some(&next_id(counter)),
+            );
             let prompt = format!(
                 "Open this URL, approve, and paste the `code` param (or the whole redirect URL):\n\n{url}\n\n\
                  (No browser callback is run — copy the code= value from the address bar after redirect.)"
             );
             match host_ask(out, pending, counter, &prompt) {
                 Ok(code) => exchange_code(&code).unwrap_or_else(|e| e),
-                Err(e) => format!(
-                    "authorize URL:\n{url}\n\n{e}"
-                ),
+                Err(e) => format!("authorize URL:\n{url}\n\n{e}"),
             }
         }
         Some("code") => {
@@ -753,7 +896,9 @@ fn main() {
         let stdin = std::io::stdin();
         for line in stdin.lock().lines() {
             let Ok(line) = line else { break };
-            let Ok(v) = serde_json::from_str::<Value>(&line) else { continue };
+            let Ok(v) = serde_json::from_str::<Value>(&line) else {
+                continue;
+            };
             if let Some(id) = v.get("id").and_then(|i| i.as_str())
                 && v.get("method").is_none()
                 && let Some(tx) = reader_pending.lock().expect("pending").remove(id)
@@ -791,7 +936,10 @@ mod tests {
     use super::*;
 
     fn sha256_hex(s: &str) -> String {
-        sha256(s.as_bytes()).iter().map(|b| format!("{b:02x}")).collect()
+        sha256(s.as_bytes())
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect()
     }
 
     #[test]
@@ -848,8 +996,20 @@ mod tests {
 
     #[test]
     fn bad_actions_error() {
-        assert!(call_tool("spotify", &json!({"action": "bogus"})).unwrap_err().contains("unknown action"));
-        assert!(call_tool("spotify", &json!({"action": "search"})).unwrap_err().contains("query"));
-        assert!(call_tool("nope", &json!({})).unwrap_err().contains("unknown tool"));
+        assert!(
+            call_tool("spotify", &json!({"action": "bogus"}))
+                .unwrap_err()
+                .contains("unknown action")
+        );
+        assert!(
+            call_tool("spotify", &json!({"action": "search"}))
+                .unwrap_err()
+                .contains("query")
+        );
+        assert!(
+            call_tool("nope", &json!({}))
+                .unwrap_err()
+                .contains("unknown tool")
+        );
     }
 }
