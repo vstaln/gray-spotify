@@ -22,7 +22,7 @@ dependencies = [
 
 [[package]]
 name = "gray-spotify"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "getrandom",
  "serde_json",
